@@ -1,0 +1,182 @@
+role user(Ui,RA,GWN,SDj:agent,H,T,PUF:hash_func,SKura:symmetric_key,Snd,Rcv:channel(dy))
+played_by Ui
+def=
+local State:nat,IDi,IDsj,MIDi,MIDj,PWi,R1,Rb,Kug,Ksg,X:text,
+   Ri,Rg,Rj,TS1,TS4,Bi,M1,TIDi,A1,SKi,TEMP,G,Ki,Kinew:text
+const ui_gwn_ri,ui_gwn_ts1,gwn_sdj_rg,gwn_sdj_ts2,sdj_gwn_rj,sd_gwn_ts3,gwn_ui_ts4,sr1,sr2,sr3,sr4:protocol_id
+init State:=0
+transition
+1.State=0/\Rcv(start) =|>
+State':=1 /\R1':=new() /\Ki':=new()
+                /\A1':=T(Ki'.X)
+                /\MIDi':=H(IDi.R1')
+	              /\Snd({IDi.MIDi'.A1'}_SKura)
+                /\secret(IDi,sr1,{Ui,RA})
+                /\secret({PWi},sr2,Ui)
+2.State=1 /\Rcv({T(G.X).TIDi'.TEMP'}_SKura)=|>
+State':=2/\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+         /\Ri':=new() /\Kinew':=new()
+        /\TS1':=new()
+	/\Kug':=T(Ki'.G.X)
+	/\Bi':=xor(Kinew'.Ri'.MIDj,Kug')
+	/\M1':=H(Ki'.Ri'.MIDj.H(IDi.R1').Kug'.TS1')
+	/\Snd(TIDi'.Bi'.M1'.TS1')
+	/\witness(Ui,GWN,ui_gwn_ri,Ri')
+	/\witness(Ui,GWN,ui_gwn_ts1,TS1')
+3.State=2/\Rcv(xor(Rj'.Rg',Kug').H(Kug'.H(IDi.R1').Ri'.Rj'.Rg'.TS4').TS4')=|>
+State':=3 /\SKi':=H(Ri'.Rj'.Rg'.H(IDi.R1').MIDj)
+	/\request(GWN,Ui,gwn_ui_ts4,TS4')
+end role
+
+
+
+
+role gateway(Ui,RA,GWN,SDj:agent,
+          H,T,PUF:hash_func,
+          SKura:symmetric_key,
+          Snd,Rcv:channel(dy))
+played_by GWN
+def=
+local State:nat,
+      IDi,IDsj,MIDi,MIDj,PWi,R1,Rb,Kug,Ksg,X:text,
+      Ri,Rg,Rj,TS1,TS2,TS3,TS4,Bi,M2,M4,TIDi,A1,TEMP,G,Ki,Kinew,Ni,Ei:text
+const ui_gwn_ri,ui_gwn_ts1,gwn_sdj_rg,gwn_sdj_ts2,sdj_gwn_rj,sd_gwn_ts3,gwn_ui_ts4,sr1,sr2,sr3,sr4:protocol_id
+init State:=0
+transition 
+%Receive login request from Ui through open channel
+1.State=0/\Rcv(TIDi'.
+               xor((Kinew'.Ri'.MIDj),T(Ki.G.X)).
+               H(Kinew'.Ri'.MIDj.H(IDi.R1).T(Ki.G.X).TS1').TS1')=|>
+State':=1/\secret(IDi,sr1,{Ui,RA})
+         /\secret({PWi},sr2,Ui)
+         /\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+         /\TS2':=new()
+         /\Rg':=new()
+         /\Ei':=xor((Ri'.Rg'.H(IDi.R1)),H(Ksg.MIDj.TS2'))
+         /\M2':=H(Ri'.Rg'.H(IDi.R1).Ksg.TS2')
+         /\witness(GWN,SDj,gwn_sdj_ts2,TS2')
+         /\witness(GWN,SDj,gwn_sdj_rg,Rg')  
+         /\request(Ui,GWN,ui_gwn_ri,Ri')
+         /\request(Ui,GWN,ui_gwn_ts1,TS1')
+        %  /\request(Ui,GWN,ui_gwn_ki,Ki)
+        %  /\request(Ui,GWN,ui_gwn_kinew,Kinew')
+%Send authentication request message to SDj through open channel
+         /\Snd(Ei'.M2'.TS2')
+
+         
+2.State=1/\Rcv(xor(Rj',H(Ksg.MIDj.TS3')).H(Ksg.MIDj.Rg'.Rj'.TS3').TS3') =|>
+  State':=2/\TS4':=new()
+           /\Ni':=xor((Rj'.Rg').T(Ki.G.X))
+           /\M4':=H(T(Ki.G.X).Ri'.Rj'.Rg'.TS4')
+           /\witness(GWN,Ui,gwn_ui_ts4,TS4')
+           /\request(SDj,GWN,sdj_gwn_rj,Rj')
+           /\request(SDj,GWN,sdj_gwn_ts3,TS3')
+           /\Snd(Ni'.M4'.TS4')
+end role
+
+
+
+
+
+role smartdevice(Ui,RA,GWN,SDj:agent,
+          H,T,PUF:hash_func,
+          SKura:symmetric_key,
+          Snd,Rcv:channel(dy))
+played_by SDj
+def=
+local State:nat,
+      IDi,IDsj,MIDi,MIDj,PWi,R1,Rb,Kug,Ksg,X:text,
+      Ri,Rg,Rj,TS2,TS3,Bi,M3,G,Ki,Kinew,Ni,SK,Gj:text
+const ui_gwn_ri,ui_gwn_ts1,gwn_sdj_rg,gwn_sdj_ts2,sdj_gwn_rj,sd_gwn_ts3,gwn_ui_ts4,sr1,sr2,sr3,sr4:protocol_id
+init State:=0
+transition 
+% Receive authentication request message from GWN through open channel
+1.State=0/\Rcv(xor((Ri'.Rg'.H(IDi.R1)),H(Ksg.MIDj.TS2')).
+               H(Ri'.Rg'.H(IDi.R1).Ksg.TS2').TS2')=|>
+State':=1/\secret(IDi,sr1,{Ui,RA})
+         /\secret({PWi},sr2,Ui)
+         /\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+         /\TS3':=new()
+         /\Rj':=new()
+         /\Gj':=xor(Rj',H(Ksg.MIDj.TS3'))
+         /\SK':=H(Ri'.Rg'.Rj'.H(IDi.R1).MIDj)
+         /\M3':=H(Ksg.MIDj.Rg'.Rj'.TS3')
+%Send authentication reply message to Ui through open channel        
+         /\Snd(Gj'.M3'.TS3')
+%SDj has freshly generated the values TS3 
+         /\witness(SDj,GWN,sdj_gwn_ts3,TS3')
+         /\witness(SDj,GWN,sdj_gwn_rj,Rj')
+%SDj’s acceptance of values TS2 by GW         
+         /\request(GWN,SDj,gwn_sdj_ts2,TS2')
+         /\request(GWN,SDj,gwn_sdj_rg,Rg')
+end role
+
+
+role registration(Ui,RA,GWN,SDj:agent,
+          H,T,PUF:hash_func,
+          SKura:symmetric_key,
+          Snd,Rcv:channel(dy))
+
+played_by RA
+def=
+local State:nat,
+      IDi,IDsj,MIDi,MIDj,PWi,R1,Rb,Kug,Ksg,X:text,
+      Ri,Rg,Rj,TS1,TS4,Bi,M1,TIDi,A1,TEMP,G,Ki,Kinew,Tg:text
+const sr1,sr2,sr3,sr4:protocol_id
+init State:=0
+transition 
+% User registration phase
+1.State=0/\Rcv({IDi.H(IDi.R1).T(Ki.X)}_SKura)=|>
+State':=2/\secret(IDi,sr1,{Ui,RA})
+         /\secret({PWi},sr2,Ui)
+         /\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+         /\TIDi':=new()
+         /\TEMP':=new()
+         /\Tg':=T(G.X)
+%Send smart card (SCi) to Ui securely
+         /\Snd({Tg'.TIDi'.TEMP'}_SKura)
+end role
+
+
+
+role session(Ui,GWN,SDj,RA:agent,H,T,PUF:hash_func,SKura:symmetric_key)
+def=
+  local SD1,RV1,SD2,RV2,SD3,RV3,SD4,RV4:channel(dy)
+  composition
+    user(Ui,GWN,SDj,RA,H,T,PUF,SKura,SD1,RV1)
+    /\smartdevice(Ui,GWN,SDj,RA,H,T,PUF,SKura,SD2,RV2)
+    /\gateway(Ui,GWN,SDj,RA,H,T,PUF,SKura,SD3,RV3)
+    /\registration(Ui,GWN,SDj,RA,H,T,PUF,SKura,SD4,RV4)
+end role
+
+role environment()
+def=
+const ui,gwn,sdj,ra:agent,h,t,puf:hash_func,
+      skji:symmetric_key,skura:symmetric_key,
+      kug,ksg,idi,idj,t1,t2,t3,t4,
+      midi,midj,bi,m1,ei,m2,tcj,gj,m3,m4:text,
+      sr1,sr2,sr3,sr4,ui_gwn_ri,ui_gwn_ts1,ui_gwn_ki,ui_gwn_kinew,
+      gwn_sdj_ts2,gwn_sdj_rg,gwn_sdj_ts4,sdj_gwn_ts3,sdj_gwn_rj:protocol_id
+intruder_knowledge={h,t1,t2,t3,
+      midi,bi,m1,ei,m2,tcj,gj,m3}
+composition
+  session(ui,gwn,sdj,ra,h,t,puf,skura)
+/\session(i,gwn,sdj,ra,h,t,puf,skura)
+/\session(ui,i,sdj,ra,h,t,puf,skura)
+/\session(ui,gwn,i,ra,h,t,puf,skura)
+end role
+
+goal 
+%%% Confidentiality (privacy)
+secrecy_of sr1, sr2,sr3,sr4
+%%% Authentication
+authentication_on ui_gwn_ri,ui_gwn_ts1
+authentication_on gwn_sdj_ts2,gwn_sdj_rg,gwn_sdj_ts4
+authentication_on sdj_gwn_ts3,sdj_gwn_rj
+end goal
+
+environment()

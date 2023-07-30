@@ -1,0 +1,37 @@
+role session(Ui,GWN,SDj,RA:agent,H,T,PUF:hash_func,SKji:symmetric_key,SKura:symmetric_key)
+def=
+  local SD1,RV1,SD2,RV2,SD3,RV3,SD4,RV4:channel(dy)
+  composition
+    user(Ui,GWN,SDj,RA,H,T,PUF,SKji,SKura,SD1,RV1)
+    /\smartdevice(Ui,GWN,SDj,RA,H,T,PUF,SKji,SKura,SD2,RV2)
+    /\gateway(Ui,GWN,SDj,RA,H,T,PUF,SKji,SKura,SD3,RV3)
+    /\registration(Ui,GWN,SDj,RA,H,T,PUF,SKji,SKura,SD4,RV4)
+end role
+
+role environment()
+def=
+const ui,gwn,sdj,ra:agent,h,t,puf:hash_func,
+      skji:symmetric_key,skura:symmetric_key,
+      kug,ksg,idi,idj,t1,t2,t3,t3
+      midi,midj,bi,m1,ei,m2,tcj,gj,m3,m4:text,
+      sr1,sr2,sr3,sr4,ui_gwn_ri,ui_gwn_ts1,ui_gwn_ki,ui_gwn_kinew,
+      gwn_sdj_ts2,gwn_sdj_rg,gwn_sdj_ts4,sdj_gwn_ts3,sdj_gwn_rj:protocol_id
+intruder_knowledge={h,t1,t2,t3,
+      midi,bi,m1,ei,m2,tcj,gj,m3}
+composition
+  session(ui,gwn,sdj,ra,h,t,puf,skji,skura)
+/\session(i,gwn,sdj,ra,h,t,puf,skji,skura)
+/\session(ui,i,sdj,ra,h,t,puf,skji,skura)
+/\session(ui,gwn,i,ra,h,t,puf,skji,skura)
+end role
+
+goal 
+%%% Confidentiality (privacy)
+secrecy_of sr1, sr2,sr3,sr4
+%%% Authentication
+authentication_on ui_gwn_ri,ui_gwn_ts1,ui_gwn_ki,ui_gwn_kinew
+authentication_on gwn_sdj_ts2,gwn_sdj_rg,gwn_sdj_ts4
+authentication_on sdj_gwn_ts3,sdj_gwn_rj
+end goal
+
+environment()

@@ -1,0 +1,26 @@
+role registration(Ui,RA,GWN,SDj:agent,
+          H,T,PUF:hash_func,
+          SKji:symmetric_key,
+          SKura:symmetric_key,
+          Snd,Rcv:channel(dy))
+
+played_by RA
+def=
+local State:nat,
+      IDi,IDsj,MIDi,MIDj,PWi,Ra,Rb,Kug,Ksg,X:text,
+      Ri,Rg,Rj,TS1,TS4,Bi,M1,TIDi,A1,TEMP,G,Ki,Kinew,Tg:text
+const sr1,sr2,sr3,sr4:protocol_id
+init State:=0
+transition 
+% User registration phase
+1.State=0/\Rcv({IDi.H(IDi.R1')}_SKura)=|>
+State':=2/\secret(IDi,sr1,{Ui,RA})
+         /\secret({PWi},sr2,Ui)
+         /\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+         /\TIDi':=new()
+         /\TEMP':=new()
+         /\Tg':=T(G.X)
+%Send smart card (SCi) to Ui securely
+         /\Snd({Tg'.TIDi'.TEMP'}_SKura)
+end role

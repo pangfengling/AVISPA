@@ -1,0 +1,45 @@
+role user(Ui,RA,GWN,SDj:agent,
+          H,T,PUF:hash_func,
+          SKji:symmetric_key,
+          SKura:symmetric_key,
+          Snd,Rcv:channel(dy))
+played_by Ui
+def=
+local State:nat,
+      IDi,IDsj,MIDi,MIDj,PWi,Ra,Rb,Kug,Ksg,X:text,
+      Ri,Rg,Rj,TS1,TS4,Bi,M1,TIDi,A1,TEMP,G,Ki,Kinew:text
+const ui_gwn_ri,ui_gwn_ki,ui_gwn_kinew,ui_gwn_ts1,gwn_ui_ts4,gwn_sdj_rg,sdj_gwn_rj,sr1,sr2,sr3:protocol_id
+init State:=0
+transition 
+%User registration phase
+1.State=0/\Rcv(start)=|>
+%Send registration request to the RA securely
+State':=1/\Ra':=new()
+         /\Ki':=new()
+         /\secret(IDi,sr1,{Ui,RA})
+         /\secret({PWi},sr2,Ui)
+         /\MIDi':=H(IDi.Ra')
+         /\A1':=T(Ki'.X)
+         /\Snd({IDi.MIDi'.A1'}_SKura)
+%receive SCI from the RA securely
+2.State=1/\Rcv({T(G.X).TIDi'.TEMP}_SKura)=|>
+%Login phase
+State':=2/\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+% Send login request to GWN via public channel
+        /\TS1':=new()
+        /\Ri':=new()
+        /\Kinew':=new()
+        /\Kug':=T(Ki'.G.X)
+        /\Bi':=xor((Kinew'.Ri'.MIDj),Kug)
+        /\M1':=H(Kinew'.Ri'.MIDj.H(IDi.Ra').Kug.TS1')
+        /\Snd(TIDi',Bi',M1',TS1')
+% Ui has freshly generated the values T1 and Rui for GWN
+/\witness(Ui,GWN,ui_gwn_ri,Ri') /\witness(Ui,GWN,ui_gwn_ts1,TS1')
+/\witness(Ui,GWN,ui_gwn_ki,Ki') /\witness(Ui,GWN,ui_gwn_kinew,Kinew')
+% Receive authentication reply message from SDj through open channel
+3.State=2/\Rcv(xor((Rj'.Rg').T(Ki'.G.X)).
+               H(T(Ki'.G.X).H(IDi.Ra').Ri'.Rj'.Rg'.TS4').TS4')=|>
+State':=3/\request(GWN,Ui,gwn_ui_ts4,TS4')
+        %  /\request(GWN,Ui,sdj_ui_rj,Rj')
+end role

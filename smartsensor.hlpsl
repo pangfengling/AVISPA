@@ -1,0 +1,33 @@
+role smartsensor(Ui,RA,GWN,SDj:agent,
+          H,T,PUF:hash_func,
+          SKura:symmetric_key,
+          Snd,Rcv:channel(dy))
+played_by SDj
+def=
+local State:nat,
+      IDi,IDsj,MIDi,MIDj,PWi,Ra,Rb,Kug,Ksg,X:text,
+      Ri,Rg,Rj,TS1,TS4,Bi,M2,M4,TIDi,A1,TEMP,G,Ki,Kinew,Ni:text
+const gwn_sdj_ts2,gwn_sdj_rg,sdj_gwn_ts3,sdj_gwn_rj,sr1,sr2,sr3,sr4:protocol_id
+init State:=0
+transition 
+% Receive authentication request message from GWN through open channel
+1.State=0/\Rcv(xor((Ri'.Rg'.H(IDi.Ra')),H(Ksg.MIDj.TS2')).
+               H(Ri'.Rg'.H(IDi.Ra').Ksg.TS2').TS2')=|>
+State':=5/\secret(IDi,sr1,{Ui,RA})
+         /\secret({PWi},sr2,Ui)
+         /\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+         /\TS3':=new()
+         /\Rj':=new()
+         /\Gj':=xor(Rj',H(Ksg.MIDj.TS3'))
+         /\SKji':=H(Ri'.Rg'.Rj'.H(IDi.Ra').MIDj)
+         /\M3':=H(Ksg.MIDj.Fj'.Rg'.Rj'.TS3')
+%Send authentication reply message to Ui through open channel        
+         /\Snd(Gj'.M3'.TS3')
+%SDj has freshly generated the values TS3 
+         /\witness(SDj,Ui,sdj_ui_ts3,TS3')
+         /\witness(SDj,Ui,sdj_ui_rj,Rj')
+%SDj’s acceptance of values TS2 by GW         
+         /\request(GWN,SDj,gwn_sdj_ts2,TS2')
+         /\request(GWN,SDj,gwn_sdj_rg,Rg')
+end role

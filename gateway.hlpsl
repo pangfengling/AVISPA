@@ -1,0 +1,44 @@
+role gateway(Ui,RA,GWN,SDj:agent,
+          H,T,PUF:hash_func,
+          SKji:symmetric_key,
+          SKura:symmetric_key,
+          Snd,Rcv:channel(dy))
+played_by GWN
+def=
+local State:nat,
+      IDi,IDsj,MIDi,MIDj,PWi,Ra,Rb,Kug,Ksg,X:text,
+      Ri,Rg,Rj,TS1,TS4,Bi,M2,M4,TIDi,A1,TEMP,G,Ki,Kinew,Ni:text
+const ui_gwn_ri,ui_gwn_ts1,ui_gwn_ki,ui_gwn_kinew,gwn_sdj_ts2,gwn_sdj_rg,sdj_gwn_ts3,sdj_gwn_rj,gwn_ui_ts4,sr1,sr2,sr3:protocol_id
+init State:=0
+transition 
+%Receive login request from Ui through open channel
+1.State=0/\Rcv(TIDi.
+               xor((Kinew'.Ri'.MIDj),T(Ki'.G.X)).
+               M1':=H(Kinew'.Ri'.MIDj.H(IDi.Ra').T(Ki'.G.X).TS1').TS1')=|>
+State':=1/\secret(IDi,sr1,{Ui,RA})
+         /\secret({PWi},sr2,Ui)
+         /\secret({IDsj}, sr3, {RA})
+         /\secret(Ksg,sr4,{GWN,SDj})
+         /\TS2':=new()
+         /\Rg':=new()
+         /\Ei':=xor((Ri'.Rg'.H(IDi.Ra')),H(Ksg.MIDj.TS2'))
+         /\M2':=H(Ri'.Rg'.H(IDi.Ra').Ksg.TS2')
+%Send authentication request message to SDj through open channel
+         /\Snd(Ei'.M2'.TS2')
+%GWN has freshly generated the values T2
+         /\witness(GWN,SDj,gwn_sdj_ts2,TS2')
+         /\witness(GWN,SDj,gwn_sdj_rg,Rg')
+%GWN’s acceptance of values Ri and TS1 for GWN by Ui       
+         /\request(Ui,GWN,ui_gwn_ri,Ri')
+         /\request(Ui,GWN,ui_gwn_ts1,TS1')
+         /\request(Ui,GWN,ui_gwn_ki,Ki')
+         /\request(Ui,GWN,ui_gwn_kinew,Kinew')
+2.State=1/\Rcv(XOR(Rj',H(Ksg.MIDj.TS3')).H(Ksg.MIDj.Rg'.Rj'.TS3').TS3') =|>
+  State':=2/\TS4':=new()
+           /\Ni':=xor((Rj'.Rg').T(Ki'.G.X))
+           /\M4':=H(T(Ki'.G.X).Ri'.Rj'.Rg'.TS4')
+           /\witness(GWN,Ui,gwn_ui_ts4,TS4')
+           /\request(SDj,GWN,sdj_gwn_rj,Rj')
+           /\request(SDj,GWN,sdj_gwn_ts3,TS3')
+           /\Snd(Ni'.M4'.TS4')
+end role
